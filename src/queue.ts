@@ -80,7 +80,7 @@ export class Queue <T> implements QueueInterface<T> {
     if(this.queueIndex[queueIndex] ) this.queueIndex[queueIndex] += 1;
     const nextData = this.temp[queueIndex]?.[this.queueIndex?.[queueIndex]!];
 
-    const currentIndex = (this.roomSize * queueIndex) + this.queueIndex[queueIndex]!;
+    const currentIndex =  this.queueIndex[queueIndex]!;
 
     if (this.callbackIsPromise) {
       return this.callback!(data, this.data, currentIndex).then((response: T) => {
@@ -121,7 +121,7 @@ export class Queue <T> implements QueueInterface<T> {
       const nextIndex = ++this.queueIndex[index]!;
       let result = undefined;
 
-      const currentIndex = (this.roomSize * index) + (this.queueIndex[index]! || 0);
+      const currentIndex = (this.queueIndex[index]! || 0);
 
       if (this.callbackIsPromise)
         return this.callback!(data, this.data, currentIndex).then((response: T) => {
