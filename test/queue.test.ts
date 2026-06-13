@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Queue } from "../queue";
+import { Queue } from "../src/queue";
 
 describe("Queue", () => {
   let queue: Queue<number>;

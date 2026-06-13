@@ -20,7 +20,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "npx vitest run ./src/test/queue.test.ts"
+    "test": "npx vitest run ./test/queue.test.ts"
   },
   "keywords": [],
   "license": "MIT",

@@ -31,11 +31,13 @@ export class Queue <T> {
       if (indexAt === this.temp.length) indexAt = 0;
       if (!tempData.length) break;
 
-      this.#setTemp(indexAt, tempData.splice(0, 1)[0]);
+      const item = tempData.splice(0, 1)[0];
+
+      if(item) this.#setTemp(indexAt, item);
       indexAt++;
     }
 
-    this.queue = this.queue.map((_, index) => this.temp[index][0]);
+    this.queue = this.queue.map((_, index) => this.temp[index]?.[0] ?? null) as T[];
     return this;
   }
 
@@ -73,21 +75,21 @@ export class Queue <T> {
     const data = this.temp?.[queueIndex]?.[itemIndex];
     if (!data) return;
 
-    this.queueIndex[queueIndex] += 1;
-    const nextData = this.temp[queueIndex]?.[this.queueIndex[queueIndex]];
+    if(this.queueIndex[queueIndex] ) this.queueIndex[queueIndex] += 1;
+    const nextData = this.temp[queueIndex]?.[this.queueIndex?.[queueIndex]!];
 
     if (this.callbackIsPromise) {
       return this.callback!(data, this.data).then((response: T) => {
         if (response) {
           this.setCompleted();
-          this.#executeOn(queueIndex, this.queueIndex[queueIndex]);
+          this.#executeOn(queueIndex, this.queueIndex[queueIndex]!);
         }
       });
     } else  this.callback!(data, this.data);
 
     this.setCompleted();
     if (nextData) {
-      this.#executeOn(queueIndex, this.queueIndex[queueIndex]);
+      this.#executeOn(queueIndex, this.queueIndex[queueIndex]!);
     }
   }
 
@@ -112,7 +114,7 @@ export class Queue <T> {
 
     this.queue.map((item, index) => {
       const data = item;
-      const nextIndex = ++this.queueIndex[index];
+      const nextIndex = ++this.queueIndex[index]!;
       let result = undefined;
 
       if (this.callbackIsPromise)
