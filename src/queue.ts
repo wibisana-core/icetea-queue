@@ -35,8 +35,7 @@ export class Queue <T> implements QueueInterface<T> {
 
       const item = tempData.splice(0, 1)[0];
 
-      if(item) this.#setTemp(indexAt, item);
-      indexAt++;
+      if(item) this.#setTemp(indexAt++, item);
     }
 
     this.queue = this.queue.map((_, index) => this.temp[index]?.[0] ?? null) as T[];
@@ -76,11 +75,10 @@ export class Queue <T> implements QueueInterface<T> {
   #executeOn(queueIndex: number, itemIndex: number) {
     const data = this.temp?.[queueIndex]?.[itemIndex];
     if (!data) return;
+    const currentIndex = this.roomSize * queueIndex + itemIndex;
 
     if(this.queueIndex[queueIndex] ) this.queueIndex[queueIndex] += 1;
     const nextData = this.temp[queueIndex]?.[this.queueIndex?.[queueIndex]!];
-
-    const currentIndex =  this.queueIndex[queueIndex]!;
 
     if (this.callbackIsPromise) {
       return this.callback!(data, this.data, currentIndex).then((response: T) => {
@@ -121,16 +119,14 @@ export class Queue <T> implements QueueInterface<T> {
       const nextIndex = ++this.queueIndex[index]!;
       let result = undefined;
 
-      const currentIndex = (this.queueIndex[index]! || 0);
-
       if (this.callbackIsPromise)
-        return this.callback!(data, this.data, currentIndex).then((response: T) => {
+        return this.callback!(data, this.data, index).then((response: T) => {
           if (response) {
             this.setCompleted();
             this.#executeOn(index, nextIndex);
           }
         });
-      else result = this.callback!(data, this.data, currentIndex);
+      else result = this.callback!(data, this.data, index);
 
       this.setCompleted();
       if (result) this.#executeOn(index, nextIndex);
