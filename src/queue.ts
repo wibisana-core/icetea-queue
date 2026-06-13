@@ -1,13 +1,15 @@
-export class Queue <T> {
-  private data: T[];
-  private roomSize: number;
-  private queue: T[];
-  private queueIndex: number[];
-  private temp: T[][];
-  private callback: Function | null;
-  private callbackIsPromise: boolean;
-  private completed: number;
-  private completedCallback: Function | null;
+import { QueueInterface } from "./types/queue.type";
+
+export class Queue <T> implements QueueInterface<T> {
+  data: T[];
+  roomSize: number;
+  queue: T[];
+  queueIndex: number[];
+  temp: T[][];
+  callback: Function | null;
+  callbackIsPromise: boolean;
+  completed: number;
+  completedCallback: Function | null;
 
   constructor(size: number) {
     this.data = [];
@@ -22,7 +24,7 @@ export class Queue <T> {
     this.completedCallback = null;
   }
 
-  setData(data = []) {
+  setData(data: T[] = []) {
     this.data = data;
     const tempData = Array.from(this.data);
 
@@ -78,14 +80,16 @@ export class Queue <T> {
     if(this.queueIndex[queueIndex] ) this.queueIndex[queueIndex] += 1;
     const nextData = this.temp[queueIndex]?.[this.queueIndex?.[queueIndex]!];
 
+    const currentIndex = (this.roomSize * queueIndex) + this.queueIndex[queueIndex]!;
+
     if (this.callbackIsPromise) {
-      return this.callback!(data, this.data).then((response: T) => {
+      return this.callback!(data, this.data, currentIndex).then((response: T) => {
         if (response) {
           this.setCompleted();
           this.#executeOn(queueIndex, this.queueIndex[queueIndex]!);
         }
       });
-    } else  this.callback!(data, this.data);
+    } else  this.callback!(data, this.data, currentIndex);
 
     this.setCompleted();
     if (nextData) {
@@ -117,14 +121,16 @@ export class Queue <T> {
       const nextIndex = ++this.queueIndex[index]!;
       let result = undefined;
 
+      const currentIndex = (this.roomSize * index) + (this.queueIndex[index]! || 0);
+
       if (this.callbackIsPromise)
-        return this.callback!(data, this.data).then((response: T) => {
+        return this.callback!(data, this.data, currentIndex).then((response: T) => {
           if (response) {
             this.setCompleted();
             this.#executeOn(index, nextIndex);
           }
         });
-      else result = this.callback!(data, this.data);
+      else result = this.callback!(data, this.data, currentIndex);
 
       this.setCompleted();
       if (result) this.#executeOn(index, nextIndex);
