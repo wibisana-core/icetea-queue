@@ -75,7 +75,7 @@ export class Queue <T> implements QueueInterface<T> {
   #executeOn(queueIndex: number, itemIndex: number) {
     const data = this.temp?.[queueIndex]?.[itemIndex];
     if (!data) return;
-    const currentIndex = this.roomSize * (queueIndex + 1) + itemIndex;
+    const currentIndex = queueIndex + this.roomSize * itemIndex;
 
     if(this.queueIndex[queueIndex] ) this.queueIndex[queueIndex] += 1;
     const nextData = this.temp[queueIndex]?.[this.queueIndex?.[queueIndex]!];

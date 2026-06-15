@@ -52,11 +52,11 @@ Creates a new queue with the specified number of parallel slots.
 Sets the data to be processed and distributes it across the available slots in a round-robin fashion. Returns `this` for chaining.
 
 ```typescript
-queue.setData([1, 2, 3, 4, 5, 6]);
+queue.setData([0, 1, 2, 3, 4, 5]);
 // Slot distribution with roomSize=3:
-//   Slot 0: [1, 4]
-//   Slot 1: [2, 5]
-//   Slot 2: [3, 6]
+//   Slot 0: [0, 3]
+//   Slot 1: [1, 4]
+//   Slot 2: [2, 5]
 ```
 
 #### `setExecutor(executor: Function): void`
