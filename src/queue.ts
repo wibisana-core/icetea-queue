@@ -2,17 +2,19 @@ import { QueueInterface } from "./types/queue.type";
 
 export class Queue <T> implements QueueInterface<T> {
   data: T[];
+  result: T[];
   roomSize: number;
   queue: T[];
   queueIndex: number[];
   temp: T[][];
   callback: Function | null;
   callbackIsPromise: boolean;
-  completed: number;
+  completed: boolean[];
   completedCallback: Function | null;
 
   constructor(size: number) {
     this.data = [];
+    this.result = []
     this.roomSize = size;
 
     this.temp = Array(this.roomSize).fill([]);
@@ -20,7 +22,7 @@ export class Queue <T> implements QueueInterface<T> {
     this.queueIndex = this.queue.map((_) => 0); // for current index (init)
     this.callback = null;
     this.callbackIsPromise = false;
-    this.completed = 0;
+    this.completed = [];
     this.completedCallback = null;
   }
 
@@ -39,6 +41,9 @@ export class Queue <T> implements QueueInterface<T> {
     }
 
     this.queue = this.queue.map((_, index) => this.temp[index]?.[0] ?? null) as T[];
+    this.result = Array(this.data.length).fill(null)
+    this.completed = Array(this.data.length).fill(false);
+
     return this;
   }
 
@@ -47,7 +52,7 @@ export class Queue <T> implements QueueInterface<T> {
     this.temp = Array(this.roomSize).fill([]);
     this.queue = Array(this.roomSize).fill(null);
     this.queueIndex = this.queue.map((_) => 0); // for current index (init)
-    this.completed = 0;
+    this.completed = [];
   }
 
   // set temp, btw temp is multidimensional array
@@ -57,13 +62,13 @@ export class Queue <T> implements QueueInterface<T> {
     );
   }
 
-  setCompleted() {
-    this.completed += 1;
+  setCompleted(index:number) {
+    this.completed[index] = true;
 
-    if (this.completedCallback && this.completed === this.data.length)
-      this.completedCallback({ status: true, completed: this.completed });
-
-    if (this.completed === this.data.length) this.#resetData();
+    if (this.completedCallback && this.completed.every((item) => item))
+      this.completedCallback({ result: this.result });
+    
+    if (this.completed.every((item) => item)) this.#resetData();
   }
 
   isPromise(callback: Function): boolean {
@@ -75,6 +80,8 @@ export class Queue <T> implements QueueInterface<T> {
   #executeOn(queueIndex: number, itemIndex: number) {
     const data = this.temp?.[queueIndex]?.[itemIndex];
     if (!data) return;
+    
+    let result;
     const currentIndex = queueIndex + this.roomSize * itemIndex;
 
     if(this.queueIndex[queueIndex] ) this.queueIndex[queueIndex] += 1;
@@ -83,31 +90,38 @@ export class Queue <T> implements QueueInterface<T> {
     if (this.callbackIsPromise) {
       return this.callback!(data, this.data, currentIndex).then((response: T) => {
         if (response) {
-          this.setCompleted();
           this.#executeOn(queueIndex, this.queueIndex[queueIndex]!);
+          this.result[currentIndex] = response
+
+          this.setCompleted(currentIndex);
         }
       });
-    } else  this.callback!(data, this.data, currentIndex);
+    } else result = this.callback!(data, this.data, currentIndex);
 
-    this.setCompleted();
-    if (nextData) {
+    if (nextData) 
       this.#executeOn(queueIndex, this.queueIndex[queueIndex]!);
-    }
+    this.result[currentIndex] = result
+    
+    this.setCompleted(currentIndex);
   }
 
-  setExecutor(executor: Function): void {
+  setExecutor(executor: Function): QueueInterface<T> {
     if (!executor || typeof executor !== "function")
       throw new Error("executor is not a function");
 
     this.callback = executor;
     this.callbackIsPromise = this.isPromise(this.callback);
+
+    return this
   }
 
-  onCompleted(callback: Function) {
+  onCompleted(callback: Function): QueueInterface<T> {
     if (!callback || typeof callback !== "function")
       throw new Error("On Compeleted is not a function");
 
     this.completedCallback = callback;
+
+    return this
   }
 
   execute() {
@@ -122,14 +136,18 @@ export class Queue <T> implements QueueInterface<T> {
       if (this.callbackIsPromise)
         return this.callback!(data, this.data, index).then((response: T) => {
           if (response) {
-            this.setCompleted();
             this.#executeOn(index, nextIndex);
+            this.result[index] = response
+            
+            this.setCompleted(index);
           }
-        });
+        })
       else result = this.callback!(data, this.data, index);
 
-      this.setCompleted();
       if (result) this.#executeOn(index, nextIndex);
+      this.result[index] = result
+
+      this.setCompleted(index);
     });
   }
 }

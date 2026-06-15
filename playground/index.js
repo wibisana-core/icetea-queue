@@ -3,8 +3,7 @@ import { Queue } from "icetea-queue";
 const executor = async (data, alldata, index) =>
   new Promise((resolve) =>
     setTimeout(() => {
-      console.log({ data, index });
-      resolve(data);
+      resolve(data * 2);
     }, 1000),
   );
 

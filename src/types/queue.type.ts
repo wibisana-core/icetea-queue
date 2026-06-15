@@ -1,16 +1,17 @@
 export interface QueueInterface<T> {
   data: T[];
+  result: T[];
   roomSize: number;
   queue: T[];
   queueIndex: number[];
   temp: T[][];
   callback: Function | null;
   callbackIsPromise: boolean;
-  completed: number;
+  completed: boolean[];
   completedCallback: Function | null;
 
   setData(data: T[]): void;
-  setCompleted(): void;
+  setCompleted(index: number): void;
   isPromise(callback: Function): boolean;
   setExecutor(executor: (
     item: T,
